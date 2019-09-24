@@ -1,0 +1,6 @@
+headers=C:/tools/libs/opengl/glfw-3.3.bin.WIN64/glfw-3.3.bin.WIN64/include/GLFW/glfw3.h \
+C:/tools/libs/opengl/glfw-3.3.bin.WIN64/glfw-3.3.bin.WIN64/include/GLFW/glfw3native.h
+
+libraryPaths = C:/tools/libs/opengl/glfw-3.3.bin.WIN64/glfw-3.3.bin.WIN64/lib-mingw-w64
+staticLibraries=libglfw3.a
+linkerOpts = -lgdi32 -lopengl32

@@ -1,0 +1,6 @@
+headers =C:/tools/libs/opengl/glew-2.1.0-win32/glew-2.1.0/include/GL/glew.h
+
+libraryPaths = C:/tools/libs/opengl/glew-2.1.0-win32/glew-2.1.0/lib/Release/x64
+staticLibraries = glew32s.lib
+compilerOpts = -DGLEW_STATIC
+linkerOpts = -lopengl32
