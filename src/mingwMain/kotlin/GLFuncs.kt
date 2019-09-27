@@ -16,8 +16,8 @@ fun NativePlacement.glGenBuffers(size: Int): CArrayPointer<UIntVar>{
     return buf
 }
 
-fun NativePlacement.glBindBuffer(bufferType: Int, buffer: CArrayPointer<UIntVar>){
-    glBindBuffer?.invoke(bufferType.convert(), buffer.pointed.value)
+fun NativePlacement.glBindBuffer(bufferType: Int, buffer: CArrayPointer<UIntVar>?){
+    glBindBuffer?.invoke(bufferType.convert(), buffer?.pointed?.value ?: 0.convert())
 }
 
 @ExperimentalUnsignedTypes

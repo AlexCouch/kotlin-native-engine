@@ -2,7 +2,7 @@ import glew.*
 import kotlinx.cinterop.*
 import platform.posix.*
 
-class ShaderProgram{
+abstract class ShaderProgram{
     val program = glCreateProgram?.invoke() ?: throw Exception("Could not create shader program")
 
     @ExperimentalUnsignedTypes
@@ -50,27 +50,57 @@ class ShaderProgram{
         }
     }
 
+    protected abstract fun bindAttributes()
+
+    @ExperimentalUnsignedTypes
+    protected fun bindAttribute(attribute: UInt, variableName: String){
+        val byteBuffer = nativeHeap.allocArray<ByteVar>(variableName.length){index ->
+            this.value = variableName[index].toByte()
+        }
+        glBindAttribLocation?.invoke(this.program, attribute.convert(), byteBuffer)
+    }
+
     fun startProgram(){
         glLinkProgram?.invoke(program) ?: throw Exception("Could not link program")
         glValidateProgram?.invoke(program) ?: throw Exception("Could not validate program")
         glUseProgram?.invoke(program) ?: throw Exception("Could not use shader program")
+        this.bindAttributes()
     }
 
+    @ExperimentalUnsignedTypes
+    fun stopProgram(){
+        glUseProgram?.invoke(0u.convert())
+    }
+
+    @ExperimentalUnsignedTypes
     fun deleteShader(shaderId: UInt){
         glDeleteShader(shaderId)
     }
 
+    abstract fun cleanup()
+
     @ExperimentalUnsignedTypes
     fun createShader(shaderName: String, shaderType: Int): UInt{
         val compiledShader = compileShaderFromFile(shaderName, shaderType)
-
         glAttachShader(program, compiledShader)
-        /*
-
-        glDeleteShader?.invoke(fs) ?: throw Exception("Could not attach fragment shader")*/
-
         return compiledShader
     }
+}
+
+@ExperimentalUnsignedTypes
+class StaticShader : ShaderProgram(){
+    private val vertexShader = this.createShader("basic", GL_VERTEX_SHADER)
+    private val fragmentShader = this.createShader("basic", GL_FRAGMENT_SHADER)
+
+    override fun cleanup() {
+        this.deleteShader(vertexShader)
+        this.deleteShader(fragmentShader)
+    }
+
+    override fun bindAttributes() {
+        this.bindAttribute(0u, "position")
+    }
+
 }
 
 
