@@ -2,15 +2,40 @@ import glew.*
 import kotlinx.cinterop.*
 import platform.posix.*
 
+data class ShaderProgramSource(val vertexSource: String, val fragmentSource: String)
+
+enum class ShaderType(val type: Int){
+    VERTEX(0),
+    FRAGMENT(1),
+    NONE(2)
+
+}
+
 abstract class ShaderProgram{
     val program = glCreateProgram?.invoke() ?: throw Exception("Could not create shader program")
 
     @ExperimentalUnsignedTypes
-    fun compileShader(source: String, shaderType: Int): UInt{
-        val id = glCreateShader?.invoke(shaderType.convert()) ?: throw Exception("Could not create shader")
+    fun compileShader(shaderProgramSource: ShaderProgramSource): Pair<UInt, UInt>{
+        val fragmentSource = shaderProgramSource.fragmentSource
+        val vertexSource = shaderProgramSource.vertexSource
         println("Created shader")
         memScoped{
-            val src = cValuesOf(source.cstr.ptr).ptr
+            val fragmentShaderID = glCreateShader?.invoke(GL_FRAGMENT_SHADER.convert()) ?: throw Exception("Could not create shader")
+            createShadersAndValidate(fragmentShaderID, fragmentSource)
+            val vertexShaderID = glCreateShader?.invoke(GL_VERTEX_SHADER.convert()) ?: throw Exception("Could not create shader")
+            createShadersAndValidate(vertexShaderID, vertexSource)
+            glAttachShader(program, fragmentShaderID)
+            glAttachShader(program, vertexShaderID)
+            glLinkProgram?.invoke(program) ?: throw Exception("Could not link program")
+            glValidateProgram?.invoke(program) ?: throw Exception("Could not validate program")
+            return (fragmentShaderID to vertexShaderID)
+        }
+    }
+
+    @ExperimentalUnsignedTypes
+    private fun createShadersAndValidate(id: UInt, shaderSource: String){
+        memScoped {
+            val src = cValuesOf(shaderSource.cstr.ptr).ptr
             glShaderSource?.invoke(id, 1, src, null) ?: throw Exception("Could not set shader source")
             println("Shader source set")
             glCompileShader?.invoke(id) ?: throw Exception("Could not compile shader")
@@ -18,25 +43,24 @@ abstract class ShaderProgram{
             val result = alloc<IntVar>()
             glGetShaderiv?.invoke(id, GL_COMPILE_STATUS.convert(), result.ptr.reinterpret())
             println(result.value)
-            if(result.value == GL_FALSE){
+            if (result.value == GL_FALSE) {
                 val length = alloc<IntVar>()
                 glGetShaderiv?.invoke(id, GL_INFO_LOG_LENGTH.convert(), length.ptr.reinterpret())
                 val lengthValue = length.value
                 val message = allocArray<ByteVar>(lengthValue * sizeOf<ByteVar>())
                 glGetShaderInfoLog?.invoke(id, lengthValue, length.ptr.reinterpret(), message)
-                println("Failed to compile ${if(shaderType == GL_VERTEX_SHADER) "vertex" else "fragment"}")
+                println("Failed to compile shader.")
                 println(message.toKString())
                 glDeleteShader?.invoke(id)
-                return 0u
             }
             println("Compile status: OK")
+
         }
-        return id
     }
 
     @ExperimentalUnsignedTypes
-    fun compileShaderFromFile(shaderName: String, shaderType: Int): UInt{
-        val path = if(shaderType == GL_FRAGMENT_SHADER) "src/mingwMain/resources/shaders/$shaderName.frag" else "src/mingwMain/resources/shaders/$shaderName.vert"
+    fun compileShaderFromFile(shaderName: String): Pair<UInt, UInt>{
+        val path = "src/mingwMain/resources/shaders/$shaderName.shader"
         val shaderFile = fopen(path, "r") ?: throw Exception("File with name $path not found.")
         fseek(shaderFile, 0, SEEK_END)
         val filelen = ftell(shaderFile)
@@ -46,8 +70,38 @@ abstract class ShaderProgram{
             val shaderSource = allocArray<ByteVar>(filelen+1)
             fread(shaderSource, filelen.convert(), 1u, shaderFile)
             val sourceStr = shaderSource.toKString()
-            return compileShader(sourceStr, shaderType)
+            val ss = arrayOf(/* Fragment Shader */StringBuilder(), /* Vertex Shader */ StringBuilder())
+            var shaderType = ShaderType.NONE.type
+            sourceStr.lines().forEach {
+                if(it.startsWith("#shader")){
+                    println("FRAGMENT")
+                    shaderType =
+                        when {
+                            it.contains("fragment") -> ShaderType.FRAGMENT.type
+                            it.contains("vertex") -> ShaderType.VERTEX.type
+                            else -> ShaderType.NONE.type
+                        }
+                }else{
+                    println(it)
+                    ss[shaderType].append(it).append('\n')
+                }
+            }
+            return compileShader(ShaderProgramSource(ss[ShaderType.VERTEX.type].toString(), ss[ShaderType.FRAGMENT.type].toString()))
         }
+    }
+
+    fun setUniformf(uniformName: String, value: Float){
+        val byteArray = nativeHeap.allocArray<ByteVar>(uniformName.length){ index ->
+            this.value = uniformName[index].toByte()
+        }
+        glUniform1f?.invoke(glGetUniformLocation?.invoke(this.program, byteArray) ?: throw IllegalStateException("No uniform of that name"), value)
+    }
+
+    fun setUniformi(uniformName: String, value: Int){
+        val byteArray = nativeHeap.allocArray<ByteVar>(uniformName.length){ index ->
+            this.value = uniformName[index].toByte()
+        }
+        glUniform1i?.invoke(glGetUniformLocation?.invoke(this.program, byteArray) ?: throw IllegalStateException("No uniform of that name"), value)
     }
 
     protected abstract fun bindAttributes()
@@ -61,8 +115,7 @@ abstract class ShaderProgram{
     }
 
     fun startProgram(){
-        glLinkProgram?.invoke(program) ?: throw Exception("Could not link program")
-        glValidateProgram?.invoke(program) ?: throw Exception("Could not validate program")
+
         glUseProgram?.invoke(program) ?: throw Exception("Could not use shader program")
         this.bindAttributes()
     }
@@ -78,19 +131,13 @@ abstract class ShaderProgram{
     }
 
     abstract fun cleanup()
-
-    @ExperimentalUnsignedTypes
-    fun createShader(shaderName: String, shaderType: Int): UInt{
-        val compiledShader = compileShaderFromFile(shaderName, shaderType)
-        glAttachShader(program, compiledShader)
-        return compiledShader
-    }
 }
 
 @ExperimentalUnsignedTypes
-class StaticShader : ShaderProgram(){
-    private val vertexShader = this.createShader("basic", GL_VERTEX_SHADER)
-    private val fragmentShader = this.createShader("basic", GL_FRAGMENT_SHADER)
+class BasicShader : ShaderProgram(){
+    private val shaderSource = this.compileShaderFromFile("basic")
+    private val vertexShader = shaderSource.first
+    private val fragmentShader = shaderSource.second
 
     override fun cleanup() {
         this.deleteShader(vertexShader)

@@ -63,11 +63,19 @@ fun NativePlacement.glEnableVertexAttribArray(enable: Boolean){
     glEnableVertexAttribArray?.invoke(e.convert())
 }
 
-fun NativePlacement.glVertexAttribPointer(index: Int, vertexSize: Int, type: Int, normalized: Boolean){
-    val stride = when(type){
-        GL_FLOAT -> sizeOf<GLfloatVar>() * vertexSize
-        GL_INT -> sizeOf<GLintVar>() * vertexSize
-        else -> 0
-    }
+@ExperimentalUnsignedTypes
+fun NativePlacement.glVertexAttribPointer(index: Int, vertexSize: Int, type: Int, stride: UInt, normalized: Boolean){
     glVertexAttribPointer?.invoke(index.convert(), vertexSize.convert(), type.convert(), if(normalized) GL_TRUE.convert() else GL_FALSE.convert(), stride.convert(), null)
+}
+
+@ExperimentalUnsignedTypes
+fun NativePlacement.glGenVertexArrays(size: Int): CPointer<GLuintVar>{
+    val buf = this.allocArray<GLuintVar>(UInt.SIZE_BYTES)
+    glGenVertexArrays?.invoke(size.convert(), buf)
+    return buf
+}
+
+@ExperimentalUnsignedTypes
+fun NativePlacement.glBindVertexArray(rendererID: CPointer<GLuintVar>?){
+    glBindVertexArray?.invoke(rendererID?.pointed?.value ?: 0u)
 }

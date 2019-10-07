@@ -1,18 +1,11 @@
 package sample
 
-import ModelLoader
 import Renderer
-import ShaderProgram
-import StaticShader
-import glBindBuffer
-import glBufferData
-import glEnableVertexAttribArray
-import glGenBuffers
-import glVertexAttribPointer
-import glew.*
+import BasicShader
 import glewInit
 import glfw.*
 import kotlinx.cinterop.*
+import rendering.BasicModel
 
 fun checkError(){
     memScoped {
@@ -44,35 +37,20 @@ fun main() {
     }
     println("Glew Init Successful!")
 
-    val loader = ModelLoader()
     val renderer = Renderer()
-    val shader = StaticShader()
-
-    val vertices = arrayOf(
-        -0.5f,  0.5f, 0f,
-        -0.5f, -0.5f, 0f,
-         0.5f, -0.5f, 0f,
-         0.5f, 0.5f, 0f
-    )
-
-    val indices = arrayOf(
-        0u, 1u, 3u,
-        3u, 1u, 2u
-    )
-
-    val rawModel = loader.loadToVAO(vertices, indices)
+    println("Renderer created!")
+    val basicModel = BasicModel()
+    println("Basic model created")
+    renderer.registerModel("basic_model", basicModel)
+    println("Basic model registered!")
 
     while(glfwWindowShouldClose(window) == GLFW_FALSE){
         renderer.prepare()
-        shader.startProgram()
-        renderer.render(rawModel)
-        shader.stopProgram()
+        renderer.render()
         glfwSwapBuffers(window)
         checkError()
         glfwPollEvents()
     }
-
-    shader.cleanup()
-    loader.cleanup()
+    renderer.stop()
     glfwTerminate()
 }
