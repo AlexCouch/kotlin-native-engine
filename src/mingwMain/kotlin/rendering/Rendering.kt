@@ -1,10 +1,7 @@
-import glGenBuffers
 import glew.*
 import kotlinx.cinterop.*
 import rendering.Model
 import rendering.Texture
-import rendering.buffers.VertexArray
-import stb_image.*
 
 @ExperimentalUnsignedTypes
 class Renderer{
@@ -32,7 +29,7 @@ class Renderer{
             va.bind()
 //            println("Binding index buffer")
             ib.bind()
-
+            println(ib.count)
 //            println("Drawing elements")
             glDrawElements(GL_TRIANGLES, ib.count, GL_UNSIGNED_INT, null)
 

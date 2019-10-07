@@ -2,6 +2,7 @@ package rendering
 
 import BasicShader
 import ShaderProgram
+import rendering.buffers.IndexBuffer
 import rendering.buffers.VertexArray
 import rendering.buffers.vertexArrayFloat
 
@@ -12,9 +13,10 @@ abstract class Model(val shader: ShaderProgram){
 
     val vertexArray: VertexArray<Float>
         get() = vertexArrayFloat(positions) { array, buffer, layout ->
-                    println("Creating vertex array of floats")
-                    layout.pushFloat(2)
+                    array.bind()
+                    layout.pushFloat(2u)
                     array.addBuffer(buffer, layout)
+                    array.unbind()
                 }
 
     val indexBuffer: IndexBuffer
@@ -23,17 +25,17 @@ abstract class Model(val shader: ShaderProgram){
 }
 
 @ExperimentalUnsignedTypes
-class BasicModel : Model(BasicShader()){
+class BasicModel : Model(BasicShader){
     override val positions: Array<Float> = arrayOf(
             -0.5f, -0.5f,
-            0.5f, -0.5f,
-            0.5f,  0.5f,
-            -0.5f, 0.5f
+             0.5f, -0.5f,
+             0.5f,  0.5f,
+            -0.5f,  0.5f
         )
     override val indicies: Array<UInt>
         get() = arrayOf(
             0u, 1u, 2u,
-            2u, 3u, 0u
+            3u, 2u, 0u
         )
 
 }

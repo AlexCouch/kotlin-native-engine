@@ -16,14 +16,14 @@ class VertexBufferLayout{
     val elements = arrayListOf<VertexBufferElement>()
     var stride: UInt = 0u
 
-    fun pushUInt(count: Int){
+    fun pushUInt(count: UInt){
         this.elements.add(VertexBufferElement(GL_UNSIGNED_INT.convert(), count.convert(), false))
-        this.stride += getSizeOfType(GL_UNSIGNED_INT.convert())
+        this.stride += count * getSizeOfType(GL_UNSIGNED_INT.convert())
     }
 
-    fun pushFloat(count: Int){
+    fun pushFloat(count: UInt){
         this.elements.add(VertexBufferElement(GL_FLOAT.convert(), count.convert(), false))
-        this.stride += getSizeOfType(GL_FLOAT.convert())
+        this.stride += count * getSizeOfType(GL_FLOAT.convert())
     }
 }
 

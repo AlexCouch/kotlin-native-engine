@@ -1,5 +1,4 @@
 import glew.GL_ARRAY_BUFFER
-import glew.GL_ELEMENT_ARRAY_BUFFER
 import glew.GL_STATIC_DRAW
 import kotlinx.cinterop.*
 import rendering.buffers.AbstractBuffer

@@ -1,11 +1,10 @@
-package rendering
+package rendering.buffers
 
 import glBindBuffer
 import glBufferData
 import glew.GL_ELEMENT_ARRAY_BUFFER
 import glew.GL_STATIC_DRAW
 import kotlinx.cinterop.nativeHeap
-import rendering.buffers.AbstractBuffer
 
 @ExperimentalUnsignedTypes
 class IndexBuffer(override val data: Array<UInt>) : AbstractBuffer<UInt>(data){

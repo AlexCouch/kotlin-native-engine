@@ -134,14 +134,12 @@ abstract class ShaderProgram{
 }
 
 @ExperimentalUnsignedTypes
-class BasicShader : ShaderProgram(){
-    private val shaderSource = this.compileShaderFromFile("basic")
-    private val vertexShader = shaderSource.first
-    private val fragmentShader = shaderSource.second
+object BasicShader : ShaderProgram(){
+    private val shaderSource: Pair<UInt, UInt> = this.compileShaderFromFile("basic")
 
     override fun cleanup() {
-        this.deleteShader(vertexShader)
-        this.deleteShader(fragmentShader)
+        this.deleteShader(shaderSource.first)
+        this.deleteShader(shaderSource.second)
     }
 
     override fun bindAttributes() {
