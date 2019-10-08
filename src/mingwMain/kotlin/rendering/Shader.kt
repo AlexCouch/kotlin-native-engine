@@ -91,33 +91,35 @@ abstract class ShaderProgram{
     }
 
     fun setUniformf(uniformName: String, value: Float){
-        val byteArray = nativeHeap.allocArray<ByteVar>(uniformName.length){ index ->
+        val byteBuf = nativeHeap.allocArray<ByteVar>(uniformName.length){ index ->
             this.value = uniformName[index].toByte()
         }
-        glUniform1f?.invoke(glGetUniformLocation?.invoke(this.program, byteArray) ?: throw IllegalStateException("No uniform of that name"), value)
+        glUniform1f?.invoke(glGetUniformLocation?.invoke(program, byteBuf) ?: throw IllegalStateException("No uniform of that name"), value)
     }
 
     fun setUniformi(uniformName: String, value: Int){
-        val byteArray = nativeHeap.allocArray<ByteVar>(uniformName.length){ index ->
+        val byteBuf = nativeHeap.allocArray<ByteVar>(uniformName.length){ index ->
             this.value = uniformName[index].toByte()
         }
-        glUniform1i?.invoke(glGetUniformLocation?.invoke(this.program, byteArray) ?: throw IllegalStateException("No uniform of that name"), value)
+        glUniform1i?.invoke(glGetUniformLocation?.invoke(program, byteBuf) ?: throw IllegalStateException("No uniform of that name"), value)
     }
 
-    protected abstract fun bindAttributes()
-
-    @ExperimentalUnsignedTypes
-    protected fun bindAttribute(attribute: UInt, variableName: String){
-        val byteBuffer = nativeHeap.allocArray<ByteVar>(variableName.length){index ->
-            this.value = variableName[index].toByte()
+    fun setUniform4i(uniformName: String, v1: Int, v2: Int, v3: Int, v4: Int){
+        val byteBuf = nativeHeap.allocArray<ByteVar>(uniformName.length){ index ->
+            this.value = uniformName[index].toByte()
         }
-        glBindAttribLocation?.invoke(this.program, attribute.convert(), byteBuffer)
+        glUniform4i?.invoke(glGetUniformLocation?.invoke(program, byteBuf) ?: throw IllegalStateException("No uniform of that name"), v1, v2, v3, v4)
+    }
+
+    fun setUniform4f(uniformName: String, v1: Float, v2: Float, v3: Float, v4: Float){
+        val byteBuf = nativeHeap.allocArray<ByteVar>(uniformName.length){ index ->
+            this.value = uniformName[index].toByte()
+        }
+        glUniform4f?.invoke(glGetUniformLocation?.invoke(program, byteBuf) ?: throw IllegalStateException("No uniform of that name"), v1, v2, v3, v4)
     }
 
     fun startProgram(){
-
         glUseProgram?.invoke(program) ?: throw Exception("Could not use shader program")
-        this.bindAttributes()
     }
 
     @ExperimentalUnsignedTypes
@@ -134,17 +136,35 @@ abstract class ShaderProgram{
 }
 
 @ExperimentalUnsignedTypes
-object BasicShader : ShaderProgram(){
-    private val shaderSource: Pair<UInt, UInt> = this.compileShaderFromFile("basic")
+abstract class BasicShader : ShaderProgram(){
+    abstract val shaderSource: Pair<UInt, UInt>
 
     override fun cleanup() {
         this.deleteShader(shaderSource.first)
         this.deleteShader(shaderSource.second)
     }
 
-    override fun bindAttributes() {
-        this.bindAttribute(0u, "position")
+}
+
+@ExperimentalUnsignedTypes
+object ColoredShader : BasicShader(){
+    override val shaderSource = this.compileShaderFromFile("colored")
+
+    override fun cleanup() {
+        this.deleteShader(shaderSource.first)
+        this.deleteShader(shaderSource.second)
     }
+}
+
+@ExperimentalUnsignedTypes
+object TexturedShader : ShaderProgram(){
+    private val shaderSource: Pair<UInt, UInt> = this.compileShaderFromFile("textured")
+
+    override fun cleanup() {
+        this.deleteShader(shaderSource.first)
+        this.deleteShader(shaderSource.second)
+    }
+
 
 }
 

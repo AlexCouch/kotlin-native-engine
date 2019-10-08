@@ -6,14 +6,14 @@ import glewInit
 import glfw.*
 import kotlinx.cinterop.*
 import rendering.BasicModel
+import rendering.ColoredModel
+import rendering.TexturedModel
 
 fun checkError(){
-    memScoped {
-        val description = allocArray<ByteVar>(sizeOf<ByteVar>())
-        val error = glfwGetError(description.reinterpret())
-        if(error != GLFW_NO_ERROR){
-            println(description.toKString())
-        }
+    val description = nativeHeap.allocArray<ByteVar>(sizeOf<ByteVar>())
+    val error = glfwGetError(description.reinterpret())
+    if(error != GLFW_NO_ERROR){
+        println(description.toKString())
     }
 }
 
@@ -35,14 +35,13 @@ fun main() {
         glfwTerminate()
         return
     }
-    println("Glew Init Successful!")
+//    println("Glew Init Successful!")
 
     val renderer = Renderer()
-    println("Renderer created!")
-    val basicModel = BasicModel()
-    println("Basic model created")
-    renderer.registerModel("basic_model", basicModel)
-    println("Basic model registered!")
+    val texturedModel = TexturedModel("src/mingwMain/resources/textures/test.png")
+    renderer.registerModel("textured_model", texturedModel)
+//    val coloredModel = ColoredModel(1.0f, 0.0f, 1.0f, 1.0f)
+//    renderer.registerModel("colored_model", coloredModel)
 
     while(glfwWindowShouldClose(window) == GLFW_FALSE){
         renderer.prepare()

@@ -18,29 +18,14 @@ class Renderer{
 
     fun render(){
         this.models.forEach { (name, model) ->
-            println("Rendering model: $name")
-            val va = model.vertexArray
-            val ib = model.indexBuffer
-            val shader = model.shader
-
-//            println("Starting shader")
-            shader.startProgram()
-//            println("Binding vertex array")
-            va.bind()
-//            println("Binding index buffer")
-            ib.bind()
-            println(ib.count)
-//            println("Drawing elements")
-            glDrawElements(GL_TRIANGLES, ib.count, GL_UNSIGNED_INT, null)
-
-//            println("Stopping shader")
-//            shader.stopProgram()
+//            println("Rendering model: $name")
+            model.render()
         }
     }
 
     fun stop(){
         this.models.forEach { (name, model) ->
-            println("Cleaning up mode: $name")
+//            println("Cleaning up mode: $name")
             model.shader.cleanup()
         }
     }

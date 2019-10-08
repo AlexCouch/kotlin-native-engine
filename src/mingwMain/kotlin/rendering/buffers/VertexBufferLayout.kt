@@ -5,7 +5,6 @@ import VertexBufferFloat
 import VertexBufferUInt
 import glBindVertexArray
 import glEnableVertexAttribArray
-import glGenBuffers
 import glGenVertexArrays
 import glVertexAttribPointer
 import glew.*
@@ -45,6 +44,7 @@ class VertexArray<T> {
     fun addBuffer(vertexBuffer: VertexBuffer<T>, bufferLayout: VertexBufferLayout){
         vertexBuffer.bind()
         bufferLayout.elements.withIndex().forEach {(i, element) ->
+            println("Setting vertex attrib array $i")
             nativeHeap.glEnableVertexAttribArray(true)
             nativeHeap.glVertexAttribPointer(i, element.count.convert(), element.type.convert(), bufferLayout.stride, element.normalized)
         }
